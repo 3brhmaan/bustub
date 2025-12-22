@@ -12,10 +12,14 @@
 
 #pragma once
 
+#include <chrono>
+#include <cstddef>
+#include <iostream>
 #include <limits>
 #include <list>
 #include <mutex>  // NOLINT
 #include <optional>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -27,14 +31,51 @@ namespace bustub {
 enum class AccessType { Unknown = 0, Lookup, Scan, Index };
 
 class LRUKNode {
+ public:
+  LRUKNode() = default;
+  LRUKNode(frame_id_t frame_id, size_t k) : k_{k}, fid_{frame_id} {}
+
+  void AddTimestamp(size_t timestamp) {
+    history_.push_front(timestamp);
+
+    if (history_.size() > k_) {
+      history_.pop_back();
+    }
+  }
+
+  auto GetFrameId() const -> frame_id_t { return fid_; }
+
+  auto Size() -> size_t { return history_.size(); }
+
+  bool is_evictable_{false};
+  std::list<size_t> history_;
+
  private:
   /** History of last seen K timestamps of this page. Least recent timestamp stored in front. */
   // Remove maybe_unused if you start using them. Feel free to change the member variables as you want.
 
-  [[maybe_unused]] std::list<size_t> history_;
   [[maybe_unused]] size_t k_;
   [[maybe_unused]] frame_id_t fid_;
-  [[maybe_unused]] bool is_evictable_{false};
+};
+
+struct NodeComparerLessK {
+  auto operator()(const LRUKNode &a, const LRUKNode &b) const -> bool {
+    if (a.history_.back() != b.history_.back()) {
+      return a.history_.back() < b.history_.back();
+    }
+
+    return a.GetFrameId() < b.GetFrameId();
+  }
+};
+
+struct NodeComparerEqualK {
+  auto operator()(const LRUKNode &a, const LRUKNode &b) const -> bool {
+    if (a.history_.back() != b.history_.back()) {
+      return a.history_.back() < b.history_.back();
+    }
+
+    return a.GetFrameId() < b.GetFrameId();
+  }
 };
 
 /**
@@ -151,12 +192,17 @@ class LRUKReplacer {
  private:
   // TODO(student): implement me! You can replace these member variables as you like.
   // Remove maybe_unused if you start using them.
-  [[maybe_unused]] std::unordered_map<frame_id_t, LRUKNode> node_store_;
+
+  std::set<LRUKNode, NodeComparerLessK> node_less_k_;
+  std::set<LRUKNode, NodeComparerEqualK> node_equal_k_;
+
+  std::unordered_map<frame_id_t, LRUKNode> node_store_;
+  size_t curr_size_{0};
+  size_t replacer_size_;
+  size_t k_;
+  std::mutex latch_;
+
   [[maybe_unused]] size_t current_timestamp_{0};
-  [[maybe_unused]] size_t curr_size_{0};
-  [[maybe_unused]] size_t replacer_size_;
-  [[maybe_unused]] size_t k_;
-  [[maybe_unused]] std::mutex latch_;
 };
 
 }  // namespace bustub

@@ -16,7 +16,7 @@
 
 namespace bustub {
 
-TEST(LRUKReplacerTest, DISABLED_SampleTest) {
+TEST(LRUKReplacerTest, SampleTest) {
   // Note that comparison with `std::nullopt` always results in `false`, and if the optional type actually does contain
   // a value, the comparison will compare the inner value.
   // See: https://devblogs.microsoft.com/oldnewthing/20211004-00/?p=105754
@@ -117,6 +117,46 @@ TEST(LRUKReplacerTest, DISABLED_SampleTest) {
   // Make sure that setting a non-existent frame as evictable or non-evictable doesn't do something strange.
   lru_replacer.SetEvictable(6, false);
   lru_replacer.SetEvictable(6, true);
+}
+
+TEST(LRUKReplacerTest, GradingTestReproduction) {
+  // Exact same setup as autograder: 10 frames, K=3
+  LRUKReplacer lru_replacer(10, 3);
+
+  // Sequence from logs:
+  // RecordAccess: 1, 2, 3, 4
+  lru_replacer.RecordAccess(1);
+  lru_replacer.RecordAccess(2);
+  lru_replacer.RecordAccess(3);
+  lru_replacer.RecordAccess(4);
+
+  // RecordAccess: 1, 2, 3
+  lru_replacer.RecordAccess(1);
+  lru_replacer.RecordAccess(2);
+  lru_replacer.RecordAccess(3);
+
+  // RecordAccess: 1, 2
+  lru_replacer.RecordAccess(1);
+  lru_replacer.RecordAccess(2);
+
+  // SetEvictable: 1, 2, 3, 4 all to true
+  lru_replacer.SetEvictable(1, true);
+  lru_replacer.SetEvictable(2, true);
+  lru_replacer.SetEvictable(3, true);
+  lru_replacer.SetEvictable(4, true);
+
+  // Evict() - autograder expects 3, but got 4
+  auto result = lru_replacer.Evict();
+
+  // With K=3:
+  // Frame 1: 3 accesses (full history)
+  // Frame 2: 3 accesses (full history)
+  // Frame 3: 2 accesses (< K, +inf distance)
+  // Frame 4: 1 access (< K, +inf distance)
+
+  // Between frames 3 and 4 (both +inf), we evict the one with EARLIEST timestamp
+  // Frame 3's first access was before frame 4's first access
+  ASSERT_EQ(3, result) << "Expected frame 3 to be evicted, got " << result.value();
 }
 
 }  // namespace bustub

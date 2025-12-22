@@ -72,6 +72,9 @@ class FrameHeader {
   /** @brief The frame ID / index of the frame this header represents. */
   const frame_id_t frame_id_;
 
+  /** @brief Optional page ID currently stored in this frame. */
+  std::optional<page_id_t> page_id_;
+
   /** @brief The readers / writer latch for this frame. */
   std::shared_mutex rwlatch_;
 
@@ -124,6 +127,9 @@ class BufferPoolManager {
   auto FlushPage(page_id_t page_id) -> bool;
   void FlushAllPages();
   auto GetPinCount(page_id_t page_id) -> std::optional<size_t>;
+  auto GetFreeFrameId() -> std::optional<frame_id_t>;
+  auto GetFrameHeaderAndPopulate(frame_id_t frame_id, page_id_t page_id) -> std::shared_ptr<FrameHeader>;
+  auto ScheduleRequest(const std::shared_ptr<FrameHeader> &frame_header, bool is_write);
 
  private:
   /** @brief The number of frames in the buffer pool. */
@@ -136,6 +142,8 @@ class BufferPoolManager {
    * @brief The latch protecting the buffer pool's inner data structures.
    *
    * TODO(P1) We recommend replacing this comment with details about what this latch actually protects.
+   * * 1. protect frame's pin_count and eviction mechanism to happen for only one thread a time in
+   * ReadPageGuard/WritePageGuard
    */
   std::shared_ptr<std::mutex> bpm_latch_;
 
