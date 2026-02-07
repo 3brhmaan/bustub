@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <iostream>
 #include <limits>

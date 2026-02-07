@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/config.h"
 #include "storage/page/b_plus_tree_page.h"
 
 namespace bustub {
@@ -64,6 +65,12 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   auto GetNextPageId() const -> page_id_t;
   void SetNextPageId(page_id_t next_page_id);
   auto KeyAt(int index) const -> KeyType;
+
+  auto FindKeyIndex(const KeyType &key, const KeyComparator &comparator) const -> int;
+  void Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator);
+  void Delete(const KeyType &key, const KeyComparator &comparator);
+
+  auto ValueAt(int index) const -> ValueType { return rid_array_[index]; }
 
   /**
    * @brief For test only return a string representing all keys in

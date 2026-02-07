@@ -12,7 +12,6 @@
 
 #include "storage/page/page_guard.h"
 #include <iostream>
-#include <mutex>
 #include <utility>
 #include "common/logger.h"
 

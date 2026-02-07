@@ -12,7 +12,6 @@
 
 #include "buffer/lru_k_replacer.h"
 #include <cstddef>
-#include <mutex>
 #include <optional>
 #include <ostream>
 #include "common/config.h"

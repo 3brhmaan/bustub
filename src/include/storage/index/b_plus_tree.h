@@ -18,6 +18,7 @@
 #include <queue>
 #include <shared_mutex>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "common/config.h"
@@ -26,11 +27,14 @@
 #include "storage/page/b_plus_tree_header_page.h"
 #include "storage/page/b_plus_tree_internal_page.h"
 #include "storage/page/b_plus_tree_leaf_page.h"
+#include "storage/page/b_plus_tree_page.h"
 #include "storage/page/page_guard.h"
 
 namespace bustub {
 
 struct PrintableBPlusTree;
+
+enum class OperationType { INSERT, DELETE };
 
 /**
  * @brief Definition of the Context class.
@@ -43,6 +47,9 @@ class Context {
   // When you insert into / remove from the B+ tree, store the write guard of header page here.
   // Remember to drop the header page guard and set it to nullopt when you want to unlock all.
   std::optional<WritePageGuard> header_page_{std::nullopt};
+
+  // when search for an element, use to for better concurrent mechanism
+  std::optional<ReadPageGuard> read_header_page_{std::nullopt};
 
   // Save the root page id here so that it's easier to know if the current page is the root page.
   page_id_t root_page_id_{INVALID_PAGE_ID};
@@ -128,6 +135,14 @@ class BPlusTree {
   void BatchOpsFromFile(const std::filesystem::path &file_name);
 
  private:
+  auto TraverseUntilLeaf(const KeyType &key, Context &ctx) -> ReadPageGuard;
+  auto TraverseUntilLeftMostLeaf() -> ReadPageGuard;
+  auto TraverseTree(const KeyType &key, Context &ctx, OperationType type);
+  auto HandlePageSplit(Context &ctx);
+  void HandleInternalPageSplit(Context &ctx, const KeyType &key, page_id_t value, size_t current_guard_index);
+  void HandlePageUnederFlow(Context &ctx);
+  void HandleInternalUnderflow(Context &ctx, size_t guard_index);
+
   /* Debug Routines for FREE!! */
   void ToGraph(page_id_t page_id, const BPlusTreePage *page, std::ofstream &out);
 

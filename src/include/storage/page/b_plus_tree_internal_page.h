@@ -79,6 +79,29 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    */
   auto ValueAt(int index) const -> ValueType;
 
+  void SetValueAt(int index, const ValueType &value);
+
+  /*
+   * insert the key/value in the internal node
+   */
+  void Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator);
+
+  /*
+   * delete the key/value entry from the internal node
+   */
+  void Delete(int entry_index);
+
+  /*
+   * search for the index of a key > my key using binary search
+   */
+  auto FindKeyIndex(const KeyType &key, const KeyComparator &comparator) const -> int;
+
+  /*
+   * used to get the pointer to the largest element <= my key
+   * it helps in traversing the tree
+   */
+  auto Lookup(const KeyType &key, const KeyComparator &comparator) const -> ValueType;
+
   /**
    * @brief For test only, return a string representing all keys in
    * this internal page, formatted as "(key1,key2,key3,...)"
