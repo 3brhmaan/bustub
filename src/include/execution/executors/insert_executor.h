@@ -15,11 +15,11 @@
 #include <memory>
 #include <utility>
 
+#include <vector>
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/insert_plan.h"
 #include "storage/table/tuple.h"
-
 namespace bustub {
 
 /**
@@ -57,6 +57,12 @@ class InsertExecutor : public AbstractExecutor {
  private:
   /** The insert plan node to be executed*/
   const InsertPlanNode *plan_;
+
+  std::unique_ptr<AbstractExecutor> child_executor_;
+  std::shared_ptr<TableInfo> table_info_;
+  std::vector<std::shared_ptr<IndexInfo>> indexes_info_;
+  int inserted_rows_count_;
+  bool is_finished_;
 };
 
 }  // namespace bustub

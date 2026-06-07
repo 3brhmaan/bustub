@@ -50,7 +50,8 @@ auto FrameHeader::GetDataMut() -> char * { return data_.data(); }
  * @brief Resets a `FrameHeader`'s member fields.
  */
 void FrameHeader::Reset() {
-  std::fill(data_.begin(), data_.end(), 0);
+  std::memset(data_.data(), 0, data_.size());
+  // std::fill(data_.begin(), data_.end(), 0);
   pin_count_.store(0);
   is_dirty_ = false;
   page_id_ = std::nullopt;
@@ -212,7 +213,7 @@ auto BufferPoolManager::GetFrameHeaderAndPopulate(frame_id_t frame_id, page_id_t
 
   //* record the access
   replacer_->RecordAccess(frame_id);
-
+  replacer_->SetEvictable(frame_id, false);
   //* populate the frame header object with page_id
   frame_header->page_id_ = page_id;
 

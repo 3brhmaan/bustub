@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/logger.h"
 #include "common/util/hash_util.h"
 #include "container/hash/hash_function.h"
 #include "execution/executor_context.h"
@@ -72,12 +73,39 @@ class SimpleAggregationHashTable {
    */
   void CombineAggregateValues(AggregateValue *result, const AggregateValue &input) {
     for (uint32_t i = 0; i < agg_exprs_.size(); i++) {
+      if (agg_types_[i] != AggregationType::CountStarAggregate) {
+        //* i need to check if the value is null
+        if (input.aggregates_[i].IsNull()) {
+          continue;
+        }
+
+        //* check if the result value is set to null
+        if (result->aggregates_[i].IsNull()) {
+          if (agg_types_[i] == AggregationType::CountAggregate) {
+            result->aggregates_[i] = ValueFactory::GetIntegerValue(1);
+          } else {
+            result->aggregates_[i] = input.aggregates_[i];
+          }
+
+          continue;
+        }
+      }
+
       switch (agg_types_[i]) {
         case AggregationType::CountStarAggregate:
+          result->aggregates_[i] = result->aggregates_[i].Add(input.aggregates_[i]);
+          break;
         case AggregationType::CountAggregate:
+          result->aggregates_[i] = result->aggregates_[i].Add(ValueFactory::GetIntegerValue(1));
+          break;
         case AggregationType::SumAggregate:
+          result->aggregates_[i] = result->aggregates_[i].Add(input.aggregates_[i]);
+          break;
         case AggregationType::MinAggregate:
+          result->aggregates_[i] = result->aggregates_[i].Min(input.aggregates_[i]);
+          break;
         case AggregationType::MaxAggregate:
+          result->aggregates_[i] = result->aggregates_[i].Max(input.aggregates_[i]);
           break;
       }
     }
@@ -203,9 +231,13 @@ class AggregationExecutor : public AbstractExecutor {
   std::unique_ptr<AbstractExecutor> child_executor_;
 
   /** Simple aggregation hash table */
-  // TODO(Student): Uncomment SimpleAggregationHashTable aht_;
+  std::unique_ptr<SimpleAggregationHashTable> hash_table_;
 
   /** Simple aggregation hash table iterator */
-  // TODO(Student): Uncomment SimpleAggregationHashTable::Iterator aht_iterator_;
+  std::unique_ptr<SimpleAggregationHashTable::Iterator> start_iter_;
+  std::unique_ptr<SimpleAggregationHashTable::Iterator> end_iter_;
+
+  bool is_table_empty_;
+  bool is_finish_;
 };
 }  // namespace bustub

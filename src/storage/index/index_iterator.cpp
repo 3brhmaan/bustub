@@ -5,7 +5,9 @@
 #include <optional>
 #include <utility>
 #include "common/config.h"
+#include "common/logger.h"
 #include "common/macros.h"
+#include "fmt/core.h"
 #include "storage/page/b_plus_tree_leaf_page.h"
 #include "storage/page/b_plus_tree_page.h"
 #include "storage/page/page_guard.h"
@@ -40,7 +42,7 @@ auto INDEXITERATOR_TYPE::IsEnd() -> bool {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto INDEXITERATOR_TYPE::operator*() -> std::pair<const KeyType &, const ValueType &> {
+auto INDEXITERATOR_TYPE::operator*() -> std::pair<const KeyType, const ValueType> {
   BUSTUB_ASSERT(!IsEnd(), "Cannot Get Key/Value From end iterator");
 
   auto current_node = guard_->As<BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>>();
